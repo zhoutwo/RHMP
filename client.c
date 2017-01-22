@@ -64,13 +64,49 @@ int main() {
 }
 
 char readRHPMessage(char* message) {
-  return 0;
+  if (!checkRHPMessage(message)) {
+    printf("%s\n", "Checksum mismatch!");
+    return 0;
+  }
+  uint16_t temp, length;
+  printf("RHP type: %s\n", message[0]);
+  temp = (message[1] << 8) + message[2];
+  if (message[0]) {
+    printf("RHP length: %d\n", temp);
+    length = temp;
+  } else {
+    printf("dstPort: %s\n", htons(temp));
+  }
+  temp = ((uint16_t)message[3] << 8) + message[4];
+  printf("srcPort: %d\n", temp);
+  if (message[0]) {
+    printf("(%.*s)\n", length, message[5]);
+  } else {
+    char rhmp[sizeof message - 7];
+    memcpy(rhmp, message[5], sizeof message - 7)
+    readRHMPMessage(rhmp);
+  }
+  return 1;
 }
 
 char readRHMPMessage(char* message) {
-  return 0;
+  uint16_t temp;
+  printf("RHMP type: %s\n", message[0] >> 2);
+  temp = (((uint16_t)(message[0] & 0b11)) << 8) + message[1];
+  printf("commID: %d\n", temp);
+  printf("RHMP message: (%.*s)\n", message[2], message[3]);
+  return 1;
 }
 
 char checkRHPMessage(char* message) {
-  return 0;
+  uint32_t sum = 0;
+  uint32_t temp = 0;
+  for (uint16_t i = 0; i < sizeof message; i += 2) {
+    temp = (message[i] << 8) + message[i+1];
+    sum += temp;
+    if (sum < temp) {
+      sum++;
+    }
+  }
+  return (sum == 0xFFFF);
 }
