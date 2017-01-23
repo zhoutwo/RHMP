@@ -7,6 +7,7 @@
 #define MESSAGE "hello there"
 #define PORT 1874
 #define BUFSIZE 1024
+#define SRCPORT 2742
 
 char readRHPMessage(char* message);
 char readRHMPMessage(char* message);
@@ -14,7 +15,7 @@ char checkRHPMessage(char* message);
 
 int main() {
   int clientSocket, nBytes;
-  char buffer[BUFSIZE];
+  uint8_t buffer[BUFSIZE];
   struct sockaddr_in clientAddr, serverAddr;
 
   /*Create UDP socket*/
@@ -33,13 +34,13 @@ int main() {
   memset((char *) &clientAddr, 0, sizeof (clientAddr));
   clientAddr.sin_family = AF_INET;
   clientAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  clientAddr.sin_port = htons(0);
+  clientAddr.sin_port = htons(SRCPORT);
 
   if (bind(clientSocket, (struct sockaddr *) &clientAddr, sizeof (clientAddr)) < 0) {
     perror("bind failed");
     return 0;
   }
-
+  printf("%X\n", 'h');
   /* Configure settings in server address struct */
   memset((char*) &serverAddr, 0, sizeof (serverAddr));
   serverAddr.sin_family = AF_INET;
@@ -48,22 +49,43 @@ int main() {
   memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
 
   /* send a message to the server */
-  if (sendto(clientSocket, MESSAGE, strlen(MESSAGE), 0,
+  uint8_t message[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x6f, 0x6c, 0x6c, 0x65, 0x68, 0x22, 0x01};
+
+//    memset(&message,'\0', sizeof(message));
+//    message[0] = 0x68;
+  printf("%d\n", strlen(message));
+  printf("%X\n", message[3]);
+
+  if (sendto(clientSocket, message, sizeof message, 0,
     (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
     perror("sendto failed");
-    return 0;
+  return 0;
   }
 
+  printf("%s\n", "here");
+  memset(buffer, 0, BUFSIZE);
   /* Receive message from server */
   nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
 
-  printf("Received from server: %s\n", buffer);
+  printf("Received from server: %X\n", buffer);
+
+  for(int i = 0; i < 46; i++){
+    printf("%X, ", buffer[i]);
+  }
+  printf("\n");
+  for(int i = 5; i < BUFSIZE; i++){
+    printf("%c", buffer[i]);
+  }
+  printf("\n");
+
+  readRHPMessage(message);
 
   close(clientSocket);
   return 0;
 }
 
 char readRHPMessage(char* message) {
+  printf("%d\n", sizeof message);
   if (!checkRHPMessage(message)) {
     printf("%s\n", "Checksum mismatch!");
     return 0;
@@ -83,7 +105,7 @@ char readRHPMessage(char* message) {
     printf("(%.*s)\n", length, message[5]);
   } else {
     char rhmp[sizeof message - 7];
-    memcpy(rhmp, message[5], sizeof message - 7)
+    memcpy(rhmp, message[5], sizeof message - 7);
     readRHMPMessage(rhmp);
   }
   return 1;
@@ -99,11 +121,14 @@ char readRHMPMessage(char* message) {
 }
 
 char checkRHPMessage(char* message) {
-  uint32_t sum = 0;
-  uint32_t temp = 0;
+  uint16_t sum = 0;
+  uint16_t temp = 0;
+  printf("%d\n", sizeof message);
   for (uint16_t i = 0; i < sizeof message; i += 2) {
-    temp = (message[i] << 8) + message[i+1];
+    temp = ((uint16_t)message[i] << 8) + message[i+1];
+
     sum += temp;
+    printf("%X, %X, i = %d\n", temp, sum, i);
     if (sum < temp) {
       sum++;
     }
