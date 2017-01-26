@@ -9,9 +9,9 @@
 #define BUFSIZE 1024
 #define SRCPORT 2742
 
-char readRHPMessage(char* message);
-char readRHMPMessage(char* message);
-char checkRHPMessage(char* message);
+char readRHPMessage(char* message, int size);
+char readRHMPMessage(char* message, int size);
+char checkRHPMessage(char* message, int size);
 
 int main() {
   int clientSocket, nBytes;
@@ -78,18 +78,22 @@ int main() {
   }
   printf("\n");
 
-  readRHPMessage(message);
+  readRHPMessage(message, sizeof message);
+
+  readRHPMessage(buffer, sizeof buffer);
 
   close(clientSocket);
   return 0;
 }
 
-char readRHPMessage(char* message) {
-  printf("%d\n", sizeof message);
-  if (!checkRHPMessage(message)) {
+char readRHPMessage(char* message, int size) {
+  printf("%d\n", size);
+  if (!checkRHPMessage(message, size)) {
     printf("%s\n", "Checksum mismatch!");
     return 0;
   }
+  printf("%s\n", "Checksum passed");
+  /*
   uint16_t temp, length;
   printf("RHP type: %s\n", message[0]);
   temp = (message[1] << 8) + message[2];
@@ -104,14 +108,14 @@ char readRHPMessage(char* message) {
   if (message[0]) {
     printf("(%.*s)\n", length, message[5]);
   } else {
-    char rhmp[sizeof message - 7];
-    memcpy(rhmp, message[5], sizeof message - 7);
-    readRHMPMessage(rhmp);
-  }
+    char rhmp[size - 7];
+    memcpy(rhmp, message[5], size - 7);
+    readRHMPMessage(rhmp, size);
+  }*/
   return 1;
 }
 
-char readRHMPMessage(char* message) {
+char readRHMPMessage(char* message, int size) {
   uint16_t temp;
   printf("RHMP type: %s\n", message[0] >> 2);
   temp = (((uint16_t)(message[0] & 0b11)) << 8) + message[1];
@@ -120,15 +124,15 @@ char readRHMPMessage(char* message) {
   return 1;
 }
 
-char checkRHPMessage(char* message) {
+char checkRHPMessage(char* message, int size) {
   uint16_t sum = 0;
   uint16_t temp = 0;
-  printf("%d\n", sizeof message);
-  for (uint16_t i = 0; i < sizeof message; i += 2) {
-    temp = ((uint16_t)message[i] << 8) + message[i+1];
+  printf("%d\n", size);
+  for (uint16_t i = 0; i < size; i += 2) {
+    temp = ((uint16_t)message[i+1] << 8) + message[i];
 
     sum += temp;
-    printf("%X, %X, i = %d\n", temp, sum, i);
+//    printf("%X, %X, i = %d\n", temp, sum, i);
     if (sum < temp) {
       sum++;
     }
