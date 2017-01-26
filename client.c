@@ -80,7 +80,7 @@ int main() {
 
   readRHPMessage(message, sizeof message);
 
-  readRHPMessage(buffer, 24);
+  readRHPMessage(buffer, BUFSIZE);
 
   close(clientSocket);
   return 0;
