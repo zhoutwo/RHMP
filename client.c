@@ -80,7 +80,7 @@ int main() {
 
   readRHPMessage(message, sizeof message);
 
-  readRHPMessage(buffer, sizeof buffer);
+  readRHPMessage(buffer, 24);
 
   close(clientSocket);
   return 0;
@@ -129,13 +129,14 @@ char checkRHPMessage(char* message, int size) {
   uint16_t temp = 0;
   printf("%d\n", size);
   for (uint16_t i = 0; i < size; i += 2) {
-    temp = ((uint16_t)message[i+1] << 8) + message[i];
+    temp = ((uint16_t)message[i+1] << 8) + (uint8_t)message[i];
 
     sum += temp;
-//    printf("%X, %X, i = %d\n", temp, sum, i);
+//    printf("temp = %X, sum = %X, i = %d\n", temp, sum, i);
     if (sum < temp) {
       sum++;
     }
+//    printf("temp = %X, sum = %X, i = %d\n", temp, sum, i);
   }
   return (sum == 0xFFFF);
 }
