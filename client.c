@@ -49,7 +49,11 @@ int main() {
   memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
 
   /* send a message to the server */
-  uint8_t message[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x6f, 0x6c, 0x6c, 0x65, 0x68, 0x22, 0x01};
+//  uint8_t message[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x6f, 0x6c, 0x6c, 0x65, 0x68, 0x22, 0x01};
+//  uint8_t message[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x01};
+  //message2
+  uint8_t message[] = {0x00,0x69,0x00,0xb6,0x0a,0x08,0x4e,0x00,0xd8,0xa6};
+
 
 //    memset(&message,'\0', sizeof(message));
 //    message[0] = 0x68;
@@ -78,7 +82,7 @@ int main() {
   }
   printf("\n");
 
-  readRHPMessage(message, sizeof message);
+   readRHPMessage(message, sizeof message);
 
   readRHPMessage(buffer, BUFSIZE);
 
@@ -92,7 +96,25 @@ char readRHPMessage(char* message, int size) {
     printf("%s\n", "Checksum mismatch!");
     return 0;
   }
-  printf("%s\n", "Checksum passed");
+  printf("%s\n", "Message received");
+  uint8_t temp = message[0];
+  if(temp == 1){
+    printf("%s\n", "RHP type: 1");
+    uint16_t length = (uint8_t)message[1];
+    uint16_t temp2 = message[2]<<8;
+    length += temp2;
+    printf("length: %X\n", length);
+    uint16_t srcPort = message[3];
+    temp2 = message[4]<<8;
+    srcPort += temp2;
+    printf("srcPort: %d\n", srcPort);
+    for(int i = 0; i < length; i++){
+        printf("%c", message[5 + i]);
+    }
+    printf("\n");
+  }else{
+
+  }
   /*
   uint16_t temp, length;
   printf("RHP type: %s\n", message[0]);
