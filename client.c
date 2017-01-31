@@ -40,7 +40,6 @@ int main() {
     perror("bind failed");
     return 0;
   }
-  printf("%X\n", 'h');
   /* Configure settings in server address struct */
   memset((char*) &serverAddr, 0, sizeof (serverAddr));
   serverAddr.sin_family = AF_INET;
@@ -50,41 +49,58 @@ int main() {
 
   /* send a message to the server */
 //  uint8_t message[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x6f, 0x6c, 0x6c, 0x65, 0x68, 0x22, 0x01};
-//  uint8_t message[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x01};
+  uint8_t message1[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x01};
   //message2
-  uint8_t message[] = {0x00,0x69,0x00,0xb6,0x0a,0x08,0x4e,0x00,0xd8,0xa6};
+  uint8_t message2[] = {0x00, 0x69, 0x00, 0xb6, 0x0a, 0x08, 0x4e, 0x00, 0xa6, 0xd8};
 
 
 //    memset(&message,'\0', sizeof(message));
 //    message[0] = 0x68;
-  printf("%d\n", strlen(message));
-  printf("%X\n", message[3]);
-
-  if (sendto(clientSocket, message, sizeof message, 0,
-    (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
-    perror("sendto failed");
-  return 0;
-  }
-
-  printf("%s\n", "here");
   memset(buffer, 0, BUFSIZE);
-  /* Receive message from server */
-  nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
+  do {
+    if (sendto(clientSocket, message1, sizeof message1, 0,
+      (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
+      perror("sendto failed");
+    return 0;
+    }
 
-  printf("Received from server: %X\n", buffer);
+    printf("%s\n", "here");
+    
+    /* Receive message from server */
+    nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
 
-  for(int i = 0; i < 46; i++){
-    printf("%X, ", buffer[i]);
-  }
-  printf("\n");
-  for(int i = 5; i < BUFSIZE; i++){
-    printf("%c", buffer[i]);
-  }
-  printf("\n");
+    for(int i = 0; i < 46; i++){
+      printf("%X, ", buffer[i]);
+    }
+    printf("\n");
+    for(int i = 5; i < BUFSIZE; i++){
+      printf("%c", buffer[i]);
+    }
+    printf("\n");
+  } while (!readRHPMessage(buffer, BUFSIZE));
 
-   readRHPMessage(message, sizeof message);
+  do {
+    if (sendto(clientSocket, message2, sizeof message2, 0,
+      (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
+      perror("sendto failed");
+    return 0;
+    }
 
-  readRHPMessage(buffer, BUFSIZE);
+    printf("%s\n", "here");
+    
+    /* Receive message from server */
+    nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
+
+    for(int i = 0; i < 46; i++){
+      printf("%X, ", buffer[i]);
+    }
+    printf("\n");
+    for(int i = 5; i < BUFSIZE; i++){
+      printf("%c", buffer[i]);
+    }
+    printf("\n");
+  } while (!readRHPMessage(buffer, BUFSIZE));
+  
 
   close(clientSocket);
   return 0;
@@ -94,7 +110,7 @@ char readRHPMessage(char* message, int size) {
   printf("%d\n", size);
   if (!checkRHPMessage(message, size)) {
     printf("%s\n", "Checksum mismatch!");
-    return 0;
+    return 0; 
   }
   printf("%s\n", "Message received");
   uint8_t temp = message[0];
@@ -112,7 +128,7 @@ char readRHPMessage(char* message, int size) {
         printf("%c", message[5 + i]);
     }
     printf("\n");
-  }else{
+  } else {
 
   }
   /*
@@ -152,7 +168,6 @@ char checkRHPMessage(char* message, int size) {
   printf("%d\n", size);
   for (uint16_t i = 0; i < size; i += 2) {
     temp = ((uint16_t)message[i+1] << 8) + (uint8_t)message[i];
-
     sum += temp;
 //    printf("temp = %X, sum = %X, i = %d\n", temp, sum, i);
     if (sum < temp) {
