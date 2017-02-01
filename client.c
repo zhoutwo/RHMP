@@ -53,6 +53,7 @@ int main() {
   uint8_t message1[] = {0x01, 0x05, 0x00, 0xb6, 0x0a, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x22, 0x01};
   //message2
   uint8_t message2[] = {0x00, 0x69, 0x00, 0xb6, 0x0a, 0x08, 0x4e, 0x00, 0xa6, 0xd8};
+  uint8_t message3[] = {0x00, 0x69, 0x00, 0xb6, 0x0a, 0x02, 0x4e, 0x00, 0xa6, 0xde};
 
 
 //    memset(&message,'\0', sizeof(message));
@@ -72,8 +73,12 @@ int main() {
         perror("sendto failed");
         return 0;
       }
-    } else if (index == 2) {
-      break;
+    } else {
+      if (sendto(clientSocket, message3, sizeof message3, 0,
+        (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
+        perror("sendto failed");
+        return 0;
+      }
     }
     
     /* Receive message from server */
