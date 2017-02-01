@@ -94,32 +94,28 @@ int main() {
 }
 
 char readRHPMessage(char* message, int size) {
-  printf("%d\n", size);
   if (!checkRHPMessage(message, size)) {
     printf("%s\n", "Checksum mismatch!");
     return 0; 
   }
   printf("RHP type: %d\n", message[0]);
-  uint8_t temp = message[0];
-  uint16_t length = (uint8_t) message[1] + (((uint8_t) message[2]) << 8);
-  if(temp == 1){
-    uint16_t temp2;
-    printf("length: %X\n", length);
-    uint16_t srcPort = message[3];
-    temp2 = message[4]<<8;
-    srcPort += temp2;
-    printf("srcPort: %d\n", srcPort);
-    for(int i = 0; i < length; i++){
-        printf("%c", message[5 + i]);
+  uint8_t type = message[0];
+  uint16_t field2 = (uint8_t) message[1] + (((uint8_t) message[2]) << 8);
+  if (type) {
+    printf("length: %d\n", field2);
+  } else {
+    printf("dstPort: %d\n", field2);
+  }
+  uint16_t srcPort = (uint8_t) message[3] + (((uint8_t) message[4]) << 8);
+  printf("srcPort: %d\n", srcPort);
+  if(type){
+    for (int i = 0; i < field2; i++) {
+      printf("%c", message[5 + i]);
     }
     printf("\n");
   } else {
 
   }
-  for(int i = 5; i < BUFSIZE; i++){
-    printf("%c", message[i]);
-  }
-  printf("\n");
   return 1;
 }
 
@@ -135,15 +131,12 @@ char readRHMPMessage(char* message, int size) {
 char checkRHPMessage(char* message, int size) {
   uint16_t sum = 0;
   uint16_t temp = 0;
-  printf("%d\n", size);
   for (uint16_t i = 0; i < size; i += 2) {
     temp = ((uint16_t)message[i+1] << 8) + (uint8_t)message[i];
     sum += temp;
-//    printf("temp = %X, sum = %X, i = %d\n", temp, sum, i);
     if (sum < temp) {
       sum++;
     }
-//    printf("temp = %X, sum = %X, i = %d\n", temp, sum, i);
   }
   return (sum == 0xFFFF);
 }
