@@ -10,7 +10,7 @@
 #define SRCPORT 2742
 
 char readRHPMessage(char* message, int size);
-char readRHMPMessage(char* message, int size);
+char readRHMPMessage(char* message);
 char checkRHPMessage(char* message, int size);
 
 int main() {
@@ -108,23 +108,25 @@ char readRHPMessage(char* message, int size) {
   }
   uint16_t srcPort = (uint8_t) message[3] + (((uint8_t) message[4]) << 8);
   printf("srcPort: %d\n", srcPort);
-  if(type){
+  if (type) {
     for (int i = 0; i < field2; i++) {
       printf("%c", message[5 + i]);
     }
     printf("\n");
   } else {
-
+    return readRHMPMessage(message+5);
   }
   return 1;
 }
 
-char readRHMPMessage(char* message, int size) {
-  uint16_t temp;
-  printf("RHMP type: %s\n", message[0] >> 2);
-  temp = (((uint16_t)(message[0] & 0b11)) << 8) + message[1];
-  printf("commID: %d\n", temp);
-  printf("RHMP message: (%.*s)\n", message[2], message[3]);
+char readRHMPMessage(char* message) {
+  uint8_t type = ((uint8_t) message[0]) & 0b00111111;
+  printf("RHMP type: %d\n", type);
+  uint16_t commID = ((((uint16_t) message[0]) & 0b11) << 8) + message[1];
+  printf("commID: %d\n", commID);
+  uint8_t length = (uint8_t) message[2];
+  printf("length: %d\n", length);
+  printf("RHMP message: (%.*s)\n", length, message+3);
   return 1;
 }
 
