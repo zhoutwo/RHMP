@@ -15,7 +15,8 @@ char checkRHPMessage(char* message, int size);
 
 int main() {
   int clientSocket, nBytes;
-  uint8_t buffer[BUFSIZE];
+  
+  uint8_t index;
   struct sockaddr_in clientAddr, serverAddr;
 
   /*Create UDP socket*/
@@ -56,15 +57,24 @@ int main() {
 
 //    memset(&message,'\0', sizeof(message));
 //    message[0] = 0x68;
-  memset(buffer, 0, BUFSIZE);
-  do {
-    if (sendto(clientSocket, message1, sizeof message1, 0,
-      (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
-      perror("sendto failed");
-    return 0;
+  for (index = 0; index < 3; index++) {
+    uint8_t buffer[BUFSIZE];
+    memset(buffer, 0, BUFSIZE);
+    if (index == 0) {
+      if (sendto(clientSocket, message1, sizeof message1, 0,
+        (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
+        perror("sendto failed");
+        return 0;
+      }
+    } else if (index == 1) {
+      if (sendto(clientSocket, message2, sizeof message2, 0,
+        (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
+        perror("sendto failed");
+        return 0;
+      }
+    } else if (index == 2) {
+      break;
     }
-
-    printf("%s\n", "here");
     
     /* Receive message from server */
     nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
@@ -77,31 +87,10 @@ int main() {
       printf("%c", buffer[i]);
     }
     printf("\n");
-  } while (!readRHPMessage(buffer, BUFSIZE));
-
-  do {
-    if (sendto(clientSocket, message2, sizeof message2, 0,
-      (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
-      perror("sendto failed");
-    return 0;
+    if (!readRHPMessage(buffer, BUFSIZE)) {
+      index = -1;
     }
-
-    printf("%s\n", "here");
-    
-    /* Receive message from server */
-    nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
-
-    for(int i = 0; i < 46; i++){
-      printf("%X, ", buffer[i]);
-    }
-    printf("\n");
-    for(int i = 5; i < BUFSIZE; i++){
-      printf("%c", buffer[i]);
-    }
-    printf("\n");
-  } while (!readRHPMessage(buffer, BUFSIZE));
-  
-
+  }
   close(clientSocket);
   return 0;
 }
