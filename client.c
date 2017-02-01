@@ -58,16 +58,17 @@ int main() {
 
 //    memset(&message,'\0', sizeof(message));
 //    message[0] = 0x68;
-  for (index = 0; index < 3; index++) {
+  for (index = 1; index < 4; index++) {
     uint8_t buffer[BUFSIZE];
     memset(buffer, 0, BUFSIZE);
-    if (index == 0) {
+    printf("Communication No. %d:\n", index);
+    if (index == 1) {
       if (sendto(clientSocket, message1, sizeof message1, 0,
         (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
         perror("sendto failed");
         return 0;
       }
-    } else if (index == 1) {
+    } else if (index == 2) {
       if (sendto(clientSocket, message2, sizeof message2, 0,
         (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
         perror("sendto failed");
@@ -83,18 +84,10 @@ int main() {
     
     /* Receive message from server */
     nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
-
-    for(int i = 0; i < 46; i++){
-      printf("%X, ", buffer[i]);
-    }
-    printf("\n");
-    for(int i = 5; i < BUFSIZE; i++){
-      printf("%c", buffer[i]);
-    }
-    printf("\n");
     if (!readRHPMessage(buffer, BUFSIZE)) {
-      index = -1;
+      index--;
     }
+    printf("%s", "\n");
   }
   close(clientSocket);
   return 0;
@@ -106,13 +99,11 @@ char readRHPMessage(char* message, int size) {
     printf("%s\n", "Checksum mismatch!");
     return 0; 
   }
-  printf("%s\n", "Message received");
+  printf("RHP type: %d\n", message[0]);
   uint8_t temp = message[0];
+  uint16_t length = (uint8_t) message[1] + (((uint8_t) message[2]) << 8);
   if(temp == 1){
-    printf("%s\n", "RHP type: 1");
-    uint16_t length = (uint8_t)message[1];
-    uint16_t temp2 = message[2]<<8;
-    length += temp2;
+    uint16_t temp2;
     printf("length: %X\n", length);
     uint16_t srcPort = message[3];
     temp2 = message[4]<<8;
@@ -125,25 +116,10 @@ char readRHPMessage(char* message, int size) {
   } else {
 
   }
-  /*
-  uint16_t temp, length;
-  printf("RHP type: %s\n", message[0]);
-  temp = (message[1] << 8) + message[2];
-  if (message[0]) {
-    printf("RHP length: %d\n", temp);
-    length = temp;
-  } else {
-    printf("dstPort: %s\n", htons(temp));
+  for(int i = 5; i < BUFSIZE; i++){
+    printf("%c", message[i]);
   }
-  temp = ((uint16_t)message[3] << 8) + message[4];
-  printf("srcPort: %d\n", temp);
-  if (message[0]) {
-    printf("(%.*s)\n", length, message[5]);
-  } else {
-    char rhmp[size - 7];
-    memcpy(rhmp, message[5], size - 7);
-    readRHMPMessage(rhmp, size);
-  }*/
+  printf("\n");
   return 1;
 }
 
