@@ -9,8 +9,8 @@
 #define BUFSIZE 1024
 #define SRCPORT 2742
 
-char readRHPMessage(char* message, int size);
-char readRHMPMessage(char* message);
+char readRHPMessage(char* message, int size, char attempt);
+char readRHMPMessage(char* message, char attempt);
 char checkRHPMessage(char* message, int size);
 
 int main() {
@@ -84,7 +84,7 @@ int main() {
     
     /* Receive message from server */
     nBytes = recvfrom(clientSocket, buffer, BUFSIZE, 0, NULL, NULL);
-    if (!readRHPMessage(buffer, BUFSIZE)) {
+    if (!readRHPMessage(buffer, BUFSIZE, index)) {
       index--;
     }
     printf("%s", "\n");
@@ -93,7 +93,7 @@ int main() {
   return 0;
 }
 
-char readRHPMessage(char* message, int size) {
+char readRHPMessage(char* message, int size, char attempt) {
   if (!checkRHPMessage(message, size)) {
     printf("%s\n", "Checksum mismatch!");
     return 0; 
@@ -114,19 +114,23 @@ char readRHPMessage(char* message, int size) {
     }
     printf("\n");
   } else {
-    return readRHMPMessage(message+5);
+    return readRHMPMessage(message+5, attempt);
   }
   return 1;
 }
 
-char readRHMPMessage(char* message) {
+char readRHMPMessage(char* message, char attempt) {
   uint8_t type = ((uint8_t) message[0]) & 0b00111111;
   printf("RHMP type: %d\n", type);
   uint16_t commID = ((((uint16_t) message[0]) & 0b11) << 8) + message[1];
   printf("commID: %d\n", commID);
   uint8_t length = (uint8_t) message[2];
   printf("length: %d\n", length);
-  printf("RHMP message: (%.*s)\n", length, message+3);
+  if (attempt == 2) {
+    printf("RHMP message: %.*s\n", length, message+3);
+  } else {
+    printf("RHMP message: %.*d\n", length, message+3);
+  }
   return 1;
 }
 
