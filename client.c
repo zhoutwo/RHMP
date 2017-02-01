@@ -122,7 +122,7 @@ char readRHPMessage(char* message, int size, char attempt) {
 char readRHMPMessage(char* message, char attempt) {
   uint8_t type = ((uint8_t) message[0]) & 0b00111111;
   printf("RHMP type: %d\n", type);
-  uint16_t commID = ((((uint16_t) message[0]) & 0b11) << 8) + message[1];
+  uint16_t commID = (((uint16_t) message[0]) & 0b11) + (((uint8_t) message[1]) << 2);
   printf("commID: %d\n", commID);
   uint8_t length = (uint8_t) message[2];
   printf("length: %d\n", length);
