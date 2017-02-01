@@ -61,7 +61,7 @@ int main() {
   for (index = 1; index < 4; index++) {
     uint8_t buffer[BUFSIZE];
     memset(buffer, 0, BUFSIZE);
-    printf("Communication No. %d:\n", index);
+    printf("Communication No. %u:\n", index);
     if (index == 1) {
       if (sendto(clientSocket, message1, sizeof message1, 0,
         (struct sockaddr *) &serverAddr, sizeof (serverAddr)) < 0) {
@@ -98,16 +98,16 @@ char readRHPMessage(char* message, int size, char attempt) {
     printf("%s\n", "Checksum mismatch!");
     return 0; 
   }
-  printf("RHP type: %d\n", message[0]);
+  printf("RHP type: %u\n", message[0]);
   uint8_t type = message[0];
   uint16_t field2 = (uint8_t) message[1] + (((uint8_t) message[2]) << 8);
   if (type) {
-    printf("length: %d\n", field2);
+    printf("length: %u\n", field2);
   } else {
-    printf("dstPort: %d\n", field2);
+    printf("dstPort: %u\n", field2);
   }
   uint16_t srcPort = (uint8_t) message[3] + (((uint8_t) message[4]) << 8);
-  printf("srcPort: %d\n", srcPort);
+  printf("srcPort: %u\n", srcPort);
   if (type) {
     for (int i = 0; i < field2; i++) {
       printf("%c", message[5 + i]);
@@ -121,15 +121,19 @@ char readRHPMessage(char* message, int size, char attempt) {
 
 char readRHMPMessage(char* message, char attempt) {
   uint8_t type = ((uint8_t) message[0]) & 0b00111111;
-  printf("RHMP type: %d\n", type);
+  printf("RHMP type: %u\n", type);
   uint16_t commID = (((uint16_t) message[0]) & 0b11) + (((uint8_t) message[1]) << 2);
-  printf("commID: %d\n", commID);
+  printf("commID: %u\n", commID);
   uint8_t length = (uint8_t) message[2];
-  printf("length: %d\n", length);
+  printf("length: %u\n", length);
   if (attempt == 2) {
     printf("RHMP message: %.*s\n", length, message+3);
   } else {
-    printf("RHMP message: %.*d\n", length, message+3);
+    uint32_t payload = 0;
+    for (uint8_t i = 0; i < length; i++) {
+      payload += (((uint32_t) message[i+3]) << (i * 8));
+    }
+    printf("RHMP message: %u\n", payload);
   }
   return 1;
 }
@@ -138,7 +142,7 @@ char checkRHPMessage(char* message, int size) {
   uint16_t sum = 0;
   uint16_t temp = 0;
   for (uint16_t i = 0; i < size; i += 2) {
-    temp = ((uint16_t)message[i+1] << 8) + (uint8_t)message[i];
+    temp = ((uint16_t) message[i+1] << 8) + (uint8_t) message[i];
     sum += temp;
     if (sum < temp) {
       sum++;
